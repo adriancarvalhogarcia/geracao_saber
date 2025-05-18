@@ -1,0 +1,306 @@
+import os
+import time
+import webbrowser
+import json
+import hashlib
+from datetime import datetime
+from statistics import mean, median, mode
+from collections import Counter
+
+# Constantes
+ARQUIVO_USUARIOS = "usuarios.json"
+TEMPO_ESPERA = 2
+MIN_SENHA_LEN = 6
+MIN_NOME_LEN = 3
+MAX_IDADE = 120
+
+# Vídeos dos cursos
+videos_cursos = {
+    "1": {
+        "titulo": "Informática Básica para Iniciantes",
+        "url": "https://youtube.com/playlist?list=PL-QAz5R5Rlm7wn20xLTIr84gbS2XkzqEZ",
+        "categoria": "Informática",
+        "duracao": "Curso completo"
+    },
+    "2": {
+        "titulo": "Pacote Office Básico",
+        "url": "https://youtube.com/playlist?list=PLAN5LgYskr17Ek2yPySn7RlhM0rKp4NL0",
+        "categoria": "Produtividade",
+        "duracao": "Curso completo"
+    },
+    "3": {
+        "titulo": "Curso de Python para Iniciantes",
+        "url": "https://youtube.com/playlist?list=PLj7gJIFoP7jdirAFg-fHe9HKOnGLGXSHZ",
+        "categoria": "Programação",
+        "duracao": "Curso completo"
+    }
+}
+
+import hashlib
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
+def limpar_tela():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def carregar_usuarios():
+    try:
+        with open(ARQUIVO_USUARIOS, "r", encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError:
+        backup_name = f"usuarios_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        os.rename(ARQUIVO_USUARIOS, backup_name)
+        print(f"Arquivo corrompido! Backup criado: {backup_name}")
+        return {}
+
+def salvar_usuarios(dados):
+    if os.path.exists(ARQUIVO_USUARIOS):
+        backup_name = f"usuarios_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        os.rename(ARQUIVO_USUARIOS, backup_name)
+
+    try:
+        with open(ARQUIVO_USUARIOS, "w", encoding='utf-8') as f:
+            json.dump(dados, f, indent=4, ensure_ascii=False)
+    except Exception as e:
+        print(f"Erro ao salvar dados: {e}")
+        time.sleep(TEMPO_ESPERA)
+
+def mostrar_menu(titulo, opcoes):
+    while True:
+        limpar_tela()
+        print(f"=== {titulo} ===")
+        print("=" * (len(titulo) + 8))
+        for num, texto in opcoes.items():
+            print(f"{num}. {texto}")
+        print("=" * (len(titulo) + 8))
+
+        escolha = input("\nEscolha uma opção: ").strip()
+        if escolha in opcoes:
+            return escolha
+
+        print("Opção inválida!")
+        time.sleep(1)
+
+def cadastrar_usuario():
+    limpar_tela()
+    print("=== CADASTRO DE USUÁRIO ===")
+    while True:
+        nome = input("Digite seu nome: ").strip()
+        if len(nome) < MIN_NOME_LEN:
+            print(f"Nome deve ter pelo menos {MIN_NOME_LEN} caracteres!")
+            continue
+        if nome in usuarios:
+            print("Usuário já existe!")
+            continue
+        break
+
+    while True:
+        senha = input("Digite sua senha: ")
+        if len(senha) < MIN_SENHA_LEN:
+            print(f"Senha deve ter pelo menos {MIN_SENHA_LEN} caracteres!")
+            continue
+        break
+
+    while True:
+        try:
+            idade = int(input("Digite sua idade: "))
+            if idade < 0 or idade > MAX_IDADE:
+                print("Idade inválida!")
+                continue
+            break
+        except ValueError:
+            print("Por favor, digite um número válido!")
+
+    usuarios[nome] = {
+        "senha": hash_password(senha),
+        "idade": idade,
+        "cursos_concluidos": [],
+        "cursos_favoritos": [],
+        "acessos": 0,
+        "data_cadastro": datetime.now().isoformat(),
+        "ultimo_acesso": None,
+        "avaliacoes": {}
+    }
+
+    print("Cadastro realizado com sucesso!")
+    time.sleep(TEMPO_ESPERA)
+
+def login():
+    limpar_tela()
+    print("=== LOGIN ===")
+    nome = input("Usuário: ").strip()
+    senha = input("Senha: ")
+
+    if nome in usuarios and usuarios[nome]["senha"] == hash_password(senha):
+        print("Login bem-sucedido!")
+        usuarios[nome]["acessos"] += 1
+        usuarios[nome]["ultimo_acesso"] = datetime.now().isoformat()
+        time.sleep(1)
+        menu_usuario(nome)
+    else:
+        print("Usuário ou senha incorretos.")
+        time.sleep(TEMPO_ESPERA)
+
+def ver_cursos(nome):
+    while True:
+        limpar_tela()
+        print("\n=== CURSOS DISPONÍVEIS ===")
+        for id, info in videos_cursos.items():
+            status = "✓" if id in usuarios[nome]["cursos_concluidos"] else " "
+            favorito = "♥" if id in usuarios[nome]["cursos_favoritos"] else " "
+            print(f"{id}. [{status}][{favorito}] {info['titulo']} - {info['categoria']} ({info['duracao']})")
+
+        print("\nOpções:")
+        print("A. Assistir curso")
+        print("F. Favoritar/Desfavoritar curso")
+        print("V. Voltar")
+
+        escolha = input("\nEscolha uma opção: ").upper().strip()
+
+        if escolha == 'A':
+            curso_id = input("Digite o número do curso para assistir: ")
+            if curso_id in videos_cursos:
+                webbrowser.open(videos_cursos[curso_id]["url"])
+                if curso_id not in usuarios[nome]["cursos_concluidos"]:
+                    usuarios[nome]["cursos_concluidos"].append(curso_id)
+                nota = input("Digite uma nota de 1 a 5 para o curso: ")
+                if nota.isdigit() and 1 <= int(nota) <= 5:
+                    usuarios[nome]["avaliacoes"][curso_id] = int(nota)
+                print("Curso marcado como concluído!")
+            else:
+                print("Curso não encontrado.")
+            time.sleep(TEMPO_ESPERA)
+
+        elif escolha == 'F':
+            curso_id = input("Digite o número do curso para favoritar/desfavoritar: ")
+            if curso_id in videos_cursos:
+                if curso_id in usuarios[nome]["cursos_favoritos"]:
+                    usuarios[nome]["cursos_favoritos"].remove(curso_id)
+                    print("Curso removido dos favoritos!")
+                else:
+                    usuarios[nome]["cursos_favoritos"].append(curso_id)
+                    print("Curso adicionado aos favoritos!")
+                time.sleep(TEMPO_ESPERA)
+            else:
+                print("Curso não encontrado.")
+                time.sleep(TEMPO_ESPERA)
+
+        elif escolha == 'V':
+            break
+
+def mostrar_estatisticas():
+    if not usuarios:
+        print("Nenhum usuário cadastrado.")
+        time.sleep(TEMPO_ESPERA)
+        return
+
+    limpar_tela()
+    print("\n=== ESTATÍSTICAS DETALHADAS ===")
+
+    total_usuarios = len(usuarios)
+    print(f"\nUsuários:")
+    print(f"- Total de usuários: {total_usuarios}")
+
+    idades = [dados["idade"] for dados in usuarios.values()]
+    print(f"\nIdades:")
+    print(f"- Média: {mean(idades):.1f} anos")
+    print(f"- Mediana: {median(idades)} anos")
+    print(f"- Menor idade: {min(idades)} anos")
+    print(f"- Maior idade: {max(idades)} anos")
+
+    todos_cursos = [curso for usuario in usuarios.values()
+                    for curso in usuario["cursos_concluidos"]]
+    if todos_cursos:
+        print(f"\nCursos:")
+        print(f"- Total de conclusões: {len(todos_cursos)}")
+        print(f"- Média por usuário: {len(todos_cursos)/total_usuarios:.1f}")
+        curso_popular = Counter(todos_cursos).most_common(1)[0]
+        print(f"- Curso mais popular: {videos_cursos[curso_popular[0]]['titulo']}")
+        print(f"  Conclusões: {curso_popular[1]}")
+
+    todas_avaliacoes = [nota for usuario in usuarios.values()
+                        for nota in usuario["avaliacoes"].values()]
+    if todas_avaliacoes:
+        print(f"\nAvaliações:")
+        print(f"- Média geral: {mean(todas_avaliacoes):.1f}/5.0")
+        print(f"- Total de avaliações: {len(todas_avaliacoes)}")
+
+    acessos = [dados["acessos"] for dados in usuarios.values()]
+    print(f"\nAcessos:")
+    print(f"- Total: {sum(acessos)}")
+    print(f"- Média por usuário: {mean(acessos):.1f}")
+
+    input("\nPressione ENTER para voltar ao menu...")
+
+def menu_usuario(nome):
+    opcoes = {
+        "1": "Ver cursos",
+        "2": "Meus cursos concluídos",
+        "3": "Meus favoritos",
+        "4": "Meu perfil",
+        "5": "Logout"
+    }
+
+    while True:
+        escolha = mostrar_menu(f"Menu do Usuário - {nome}", opcoes)
+
+        if escolha == "1":
+            ver_cursos(nome)
+        elif escolha == "2":
+            limpar_tela()
+            print("\n=== CURSOS CONCLUÍDOS ===")
+            for curso_id in usuarios[nome]["cursos_concluidos"]:
+                nota = usuarios[nome]["avaliacoes"].get(curso_id, "Não avaliado")
+                print(f"- {videos_cursos[curso_id]['titulo']} (Nota: {nota})")
+            input("\nPressione ENTER para continuar...")
+        elif escolha == "3":
+            limpar_tela()
+            print("\n=== CURSOS FAVORITOS ===")
+            for curso_id in usuarios[nome]["cursos_favoritos"]:
+                print(f"- {videos_cursos[curso_id]['titulo']}")
+            input("\nPressione ENTER para continuar...")
+        elif escolha == "4":
+            limpar_tela()
+            print("\n=== MEU PERFIL ===")
+            user = usuarios[nome]
+            print(f"Nome: {nome}")
+            print(f"Idade: {user['idade']}")
+            print(f"Data de cadastro: {user['data_cadastro']}")
+            print(f"Último acesso: {user['ultimo_acesso']}")
+            print(f"Total de acessos: {user['acessos']}")
+            print(f"Cursos concluídos: {len(user['cursos_concluidos'])}")
+            print(f"Cursos favoritos: {len(user['cursos_favoritos'])}")
+            input("\nPressione ENTER para continuar...")
+        elif escolha == "5":
+            break
+
+def menu_principal():
+    opcoes = {
+        "1": "Cadastrar",
+        "2": "Login",
+        "3": "Estatísticas",
+        "4": "Sair"
+    }
+
+    while True:
+        escolha = mostrar_menu("GERAÇÃO SABER CURSOS ONLINE", opcoes)
+
+        if escolha == "1":
+            cadastrar_usuario()
+        elif escolha == "2":
+            login()
+        elif escolha == "3":
+            mostrar_estatisticas()
+        elif escolha == "4":
+            salvar_usuarios(usuarios)
+            print("Até logo!")
+            break
+
+# Inicialização
+if __name__ == "__main__":
+    usuarios = carregar_usuarios()
+    menu_principal()
