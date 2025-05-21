@@ -84,10 +84,15 @@ O sistema mostra:
 ## 👨‍🎓 Autores
 
 **Adrian Carvalho Garcia** - R.A.: H251AF3  
+
 **Gabriel Soares Merissi** - R.A.: G79BCI7
+
 **Rian Ferrari Picolin** - R.A.: R841IE8
+
 **Carlos Henrique Messias Samora** - R.A.: H593298
+
 **Caio Henrique Dias dos Santos** - R.A.: H749CF6
+
 **Guilherme Henrique 
 
 Curso: Análise e Desenvolvimento de Sistemas – UNIP  
