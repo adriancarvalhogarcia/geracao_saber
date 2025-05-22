@@ -93,7 +93,7 @@ O sistema mostra:
 
 **Caio Henrique Dias dos Santos** - R.A.: H749CF6
 
-**Guilherme Henrique 
+**Guilherme Henrique de Brito Vicioso** - R.A.: H5811I8
 
 Curso: Análise e Desenvolvimento de Sistemas – UNIP  
 Polo: São José do Rio Preto – SP  
