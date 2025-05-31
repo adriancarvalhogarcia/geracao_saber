@@ -97,8 +97,7 @@ O sistema mostra:
 
 Curso: Análise e Desenvolvimento de Sistemas – UNIP  
 Polo: São José do Rio Preto – SP  
-Professor Orientador: Prof. Me. Jonathan Rogeri
-
+Professor Orientador: Prof. Me. Jonathan Rogeri 
 ---
 
 ## 📁 Execução do Código
